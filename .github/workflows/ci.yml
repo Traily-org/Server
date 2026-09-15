@@ -1,0 +1,91 @@
+name: CI Backend
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+env:
+  GO_VERSION: "1.26.7"
+
+jobs:
+  format:
+    name: Formatage (gofmt/goimports)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: gofmt
+        run: |
+          diff="$(gofmt -l .)"
+          if [ -n "$diff" ]; then
+            echo "Fichiers non formatés (gofmt) :"
+            echo "$diff"
+            exit 1
+          fi
+      - name: goimports
+        run: |
+          go install golang.org/x/tools/cmd/goimports@latest
+          diff="$(goimports -l .)"
+          if [ -n "$diff" ]; then
+            echo "Fichiers non formatés (goimports) :"
+            echo "$diff"
+            exit 1
+          fi
+
+  lint:
+    name: Lint (golangci-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: go test
+        run: go test ./...
+      - name: Couverture (informatif, non bloquant)
+        run: |
+          go test -coverprofile=coverage.out ./... || true
+          if [ -s coverage.out ]; then
+            total="$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | tr -d '%')"
+            echo "Couverture totale : ${total}%"
+            if awk "BEGIN {exit !($total < 60)}"; then
+              echo "::warning::Couverture de tests ${total}% inférieure à la cible de 60%"
+            fi
+          fi
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: go build -o bin/traily ./cmd/main.go
+
+  vulncheck:
+    name: Vulnérabilités (govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
