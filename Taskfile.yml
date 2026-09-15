@@ -9,6 +9,12 @@ tasks:
     cmds:
       - ./bin/traily
 
+  run:
+    deps:
+      - build
+    cmds:
+      - ./bin/traily
+
   dev:
     cmds:
       - task: build
