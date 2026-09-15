@@ -1,0 +1,12 @@
+version: "3"
+
+tasks:
+  build:
+    cmds:
+      - go build -o bin/traily ./cmd/main.go
+
+  run:
+    deps:
+      - build
+    cmds:
+      - ./bin/traily
