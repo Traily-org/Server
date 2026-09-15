@@ -1,12 +1,19 @@
 version: "3"
 
 tasks:
-  build:
+  desc: compile traily's backend
+  compile:
     cmds:
       - go build -o bin/traily ./cmd/main.go
 
   run:
+    desc: run traily's backend
     deps:
-      - build
+      - compile
     cmds:
       - ./bin/traily
+
+  build:
+   desc: build the docker image of the traily's backend
+   cmds:
+     - docker build -t traily/backend .
