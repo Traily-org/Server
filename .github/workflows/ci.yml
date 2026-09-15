@@ -10,6 +10,18 @@ env:
   GO_VERSION: "1.26.7"
 
 jobs:
+  protect-main:
+    name: Protection main (PR uniquement depuis develop)
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier la branche source
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "::error::Les PR vers main ne sont autorisées que depuis develop (source actuelle : ${{ github.head_ref }})"
+            exit 1
+          fi
+
   format:
     name: Formatage (gofmt/goimports)
     runs-on: ubuntu-latest
