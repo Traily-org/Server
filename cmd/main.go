@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/charmbracelet/log"
 
-	"github.com/traily-org/server/traily/internal/adapters/http"
-	"github.com/traily-org/server/traily/internal/config"
-	"github.com/traily-org/server/traily/internal/domain/greeting"
+	"github.com/traily-org/server/internal/adapters/http"
+	"github.com/traily-org/server/internal/config"
+	"github.com/traily-org/server/internal/domain/greeting"
 )
 
 func main() {

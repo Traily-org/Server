@@ -1,21 +1,26 @@
 version: "3"
 
 tasks:
-  build:
+  compile:
+    desc: compile traily's backend
     cmds:
       - go build -o bin/traily ./cmd/main.go
 
-  exec:
-    cmds:
-      - ./bin/traily
-
   run:
+    desc: run traily's api
     deps:
-      - build
+      - compile
     cmds:
       - ./bin/traily
 
-  dev:
+  docker:dev:
+    desc: run traily's api in dev mode, removing containers on stop
     cmds:
-      - task: build
-      - task: exec
+      - defer: docker compose down
+      - docker compose up -V --build
+
+  docker:prod:
+    desc: run traily's api in prod mode, removing containers on stop
+    cmds:
+      - defer: docker compose -f docker-compose.prod.yml down
+      - docker compose -f docker-compose.prod.yml up --build
