@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o traily-backend ./cmd/main.go
+RUN go build -ldflags "-s -w" -o traily-backend ./cmd/main.go
 
 FROM golang:1.25-alpine AS dev
 
@@ -26,15 +26,11 @@ EXPOSE 8080
 
 ENTRYPOINT [ "air", "-c", ".air.toml" ]
 
-FROM alpine:3.24
+FROM gcr.io/distroless/static-debian12
 
 WORKDIR /app
 
-RUN addgroup -S trailyuser && adduser -S -G trailyuser -H -s /sbin/nologin trailyuser
-
-COPY --from=builder --chown=trailyuser:trailyuser /app/traily-backend /app/traily-backend
-
-USER trailyuser
+COPY --from=builder /app/traily-backend .
 
 EXPOSE 8080
 
