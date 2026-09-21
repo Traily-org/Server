@@ -5,9 +5,7 @@ import (
 
 	"github.com/charmbracelet/log"
 
-	"github.com/traily-org/server/internal/adapters/http"
 	"github.com/traily-org/server/internal/config"
-	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
 	"github.com/traily-org/server/migrations"
 )
@@ -26,13 +24,5 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	userRepository := postgres.NewUserRepository(pool)
-	userService := user.NewService(userRepository)
-	userHandler := http.NewUserHandler(userService)
-
-	server := http.NewServer(userHandler)
-
-	if err := server.Run(cfg.Port); err != nil {
-		log.Fatalf("server stopped: %v", err)
-	}
+	log.Info("migrations applied")
 }

@@ -8,12 +8,38 @@ services:
       target: dev
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     volumes:
       - ./:/app
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: traily_db_dev
+    image: postgres:16-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   go-mod-cache:
   go-build-cache:
+  db-data:
