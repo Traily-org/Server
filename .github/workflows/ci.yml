@@ -4,10 +4,14 @@ on:
   pull_request:
     branches: [develop, main]
   push:
-    branches: [develop, main]
+    branches: [develop, main, "feat/**", "feature/**", "fix/**"]
 
 env:
-  GO_VERSION: "1.26.7"
+  GO_VERSION: "1.25.0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   protect-main:
@@ -30,6 +34,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: gofmt
         run: |
           diff="$(gofmt -l .)"
@@ -56,6 +61,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - uses: golangci/golangci-lint-action@v9
         with:
           version: latest
@@ -68,6 +74,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: go test
         run: go test ./...
       - name: Couverture (informatif, non bloquant)
@@ -81,6 +88,27 @@ jobs:
             fi
           fi
 
+  integration-test:
+    name: Tests d'intégration
+    if: |
+      (github.event_name == 'pull_request' && github.base_ref == 'develop') ||
+      (github.event_name == 'push' && (
+        github.ref_name == 'develop' ||
+        startsWith(github.ref_name, 'feat/') ||
+        startsWith(github.ref_name, 'feature/') ||
+        startsWith(github.ref_name, 'fix/')
+      ))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: go test (integration)
+        run: go test -tags=integration ./...
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -89,7 +117,21 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - run: go build -o bin/traily ./cmd/main.go
+
+  docker-build:
+    name: Build image Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   vulncheck:
     name: Vulnérabilités (govulncheck)
@@ -99,5 +141,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - run: govulncheck ./...
