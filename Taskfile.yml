@@ -13,6 +13,16 @@ tasks:
     cmds:
       - ./bin/traily
 
+  migrate:
+    desc: run pending DB migrations manually
+    cmds:
+      - go run ./cmd/migrate
+
+  docker:migrate:
+    desc: run pending DB migrations manually inside the dev container
+    cmds:
+      - docker compose exec api go run ./cmd/migrate
+
   docker:dev:
     desc: run traily's api in dev mode, removing containers on stop
     cmds:
