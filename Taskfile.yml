@@ -13,6 +13,18 @@ tasks:
     cmds:
       - ./bin/traily
 
+  test:
+    desc: run unit tests
+    cmds:
+      - go test ./...
+
+  test:integration:
+    desc: run integration tests (requires Docker running)
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go test -tags=integration ./...
+
   migrate:
     desc: run pending DB migrations manually
     cmds:
